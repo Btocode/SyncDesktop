@@ -38,4 +38,15 @@ export interface ThemeConfig {
   iconTheme: string;
   syntaxTheme: string;
   font: string;
+  darkMode: boolean;
+  monospaceFont: string;
+  documentFont: string;
+  fontAntialiasing: string;
+  fontHinting: string;
+  cursorTheme: string;
+  cursorSize: string;
+  buttonLayout: string;
+  animations: boolean;
+  clockFormat: string;
+  accentColor: string;
 }
