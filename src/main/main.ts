@@ -84,7 +84,7 @@ ipcMain.on('get-ubuntu-extensions', async (event) => {
     });
   } catch (error) {
     event.reply('get-ubuntu-extensions', {
-      error: error.message || 'Failed to get installed packages',
+      error: error instanceof Error ? error.message : 'Failed to get installed packages',
       extensions: []
     });
   }

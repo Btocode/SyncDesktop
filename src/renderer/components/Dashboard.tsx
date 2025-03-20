@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import '../App.css';
 import Sidebar from './Sidebar';
 import { DeviceConfig, Extension, TerminalConfig, ThemeConfig } from '../types';
@@ -90,11 +90,24 @@ const mockTerminalConfig: TerminalConfig = {
 };
 
 const mockThemeConfig: ThemeConfig = {
-  uiTheme: 'Dark+',
-  iconTheme: 'Material Icons',
+  uiTheme: 'One Dark Pro',
+  iconTheme: 'Nord',
   syntaxTheme: 'One Dark Pro',
-  font: 'JetBrains Mono'
+  font: 'Fira Code',
+  darkMode: true,
+  monospaceFont: 'Fira Code',
+  documentFont: 'Fira Code',
+  fontAntialiasing: 'Subpixel',
+  fontHinting: 'Auto',
+  cursorTheme: 'Nord',
+  cursorSize: 'Medium',
+  buttonLayout: 'Default',
+  animations: true,
+  clockFormat: '12h',
+  accentColor: '#008080'
 };
+
+
 
 function Dashboard() {
   // State for active tab and selected device
@@ -179,7 +192,7 @@ function Dashboard() {
           )}
 
           {activeTab === 'themes' && (
-            <ThemesPage themeConfig={themeConfig} />
+            <ThemesPage />
           )}
 
           {activeTab === 'settings' && (
