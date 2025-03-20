@@ -1,13 +1,28 @@
 /* Theme Stats Grid */
 .theme-stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+
+.stat-item {
+  /* text should not go out of the box */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Theme Preview Section */
 .theme-preview-section {
   margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.theme-preview-section h3 {
+  margin-bottom: 1rem;
 }
 
 /* Code Preview Container */
@@ -18,7 +33,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   line-height: 1.5;
-  margin-top: 0.5rem;
+  overflow-x: auto;
 }
 
 /* Code Lines */
@@ -62,4 +77,5 @@
 /* Customize Theme Section */
 .theme-customize-section {
   margin-top: 1.5rem;
+  margin-bottom: 2rem;
 }
