@@ -1,15 +1,13 @@
 import React from 'react';
 import '../App.css';
 import Sidebar from './Sidebar';
-// import DevicesPage from '../pages/DevicesPage';
-// import DeviceDetailsPage from '../pages/DeviceDetailsPage';
-// import ExtensionsPage from '../pages/ExtensionsPage';
-// import TerminalPage from '../pages/TerminalPage';
 import { DeviceConfig, Extension, TerminalConfig, ThemeConfig } from '../types';
 import DeviceDetailsPage from '../pages/DeviceDetailsPage';
 import DevicesPage from '../pages/DevicesPage';
 import ExtensionsPage from '../pages/ExtensionsPage';
 import TerminalPage from '../pages/TerminalPage';
+import ThemesPage from '../pages/ThemesPage';
+import SettingsPage from '../pages/SettingsPage';
 
 // Mock data
 const mockDevices: DeviceConfig[] = [
@@ -181,182 +179,11 @@ function Dashboard() {
           )}
 
           {activeTab === 'themes' && (
-            <div>
-              <div className="dashboard-header">
-                <div>
-                  <h1 className="dashboard-title">Theme Configuration</h1>
-                  <p className="dashboard-subtitle">Customize your visual experience</p>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="stat-item">
-                  <div className="stat-label">UI Theme</div>
-                  <div className="stat-value">{themeConfig.uiTheme}</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-label">Icon Theme</div>
-                  <div className="stat-value">{themeConfig.iconTheme}</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-label">Syntax Highlighting</div>
-                  <div className="stat-value">{themeConfig.syntaxTheme}</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-label">Font</div>
-                  <div className="stat-value">{themeConfig.font}</div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '2rem' }}>
-                <h3>Theme Preview</h3>
-                <div style={{
-                  backgroundColor: '#282c34',
-                  padding: '1rem',
-                  borderRadius: '6px',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '13px',
-                  lineHeight: '1.5',
-                  marginTop: '0.5rem'
-                }}>
-                  <div style={{ color: '#c678dd' }}>function <span style={{ color: '#61afef' }}>calculateTotal</span>(<span style={{ color: '#e06c75' }}>items</span>) {'{'}</div>
-                  <div style={{ marginLeft: '20px', color: '#abb2bf' }}>
-                    <span style={{ color: '#c678dd' }}>const</span> total = items.<span style={{ color: '#61afef' }}>reduce</span>((sum, item) {'=>'} {'{'}
-                  </div>
-                  <div style={{ marginLeft: '40px', color: '#abb2bf' }}>
-                    <span style={{ color: '#c678dd' }}>return</span> sum + item.price * item.quantity;
-                  </div>
-                  <div style={{ marginLeft: '20px', color: '#abb2bf' }}>{'}'}, <span style={{ color: '#d19a66' }}>0</span>);</div>
-                  <div style={{ marginLeft: '20px', color: '#abb2bf' }}>
-                    <span style={{ color: '#c678dd' }}>return</span> total;
-                  </div>
-                  <div style={{ color: '#abb2bf' }}>{'}'}</div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '1.5rem' }}>
-                <button className="btn btn-primary">Customize Theme</button>
-              </div>
-            </div>
+            <ThemesPage themeConfig={themeConfig} />
           )}
 
           {activeTab === 'settings' && (
-            <div>
-              <div className="dashboard-header">
-                <div>
-                  <h1 className="dashboard-title">Settings</h1>
-                  <p className="dashboard-subtitle">Configure SyncD application settings</p>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '2rem' }}>
-                <h3>General Settings</h3>
-                <div className="settings-group">
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Auto-sync on startup</div>
-                      <div className="settings-description">Automatically sync all devices when application starts</div>
-                    </div>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={true} />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </div>
-
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Sync frequency</div>
-                      <div className="settings-description">How often to check for changes</div>
-                    </div>
-                    <select
-                      style={{
-                        backgroundColor: 'var(--bg-tertiary)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '0.5rem 0.75rem',
-                        color: 'var(--text-primary)',
-                        width: '150px'
-                      }}
-                    >
-                      <option>Every 15 minutes</option>
-                      <option>Every 30 minutes</option>
-                      <option>Every hour</option>
-                      <option>Manual only</option>
-                    </select>
-                  </div>
-
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Notifications</div>
-                      <div className="settings-description">Show notifications for sync events</div>
-                    </div>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={true} />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '2rem' }}>
-                <h3>Advanced Settings</h3>
-                <div className="settings-group">
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Conflict resolution</div>
-                      <div className="settings-description">How to handle conflicting changes</div>
-                    </div>
-                    <select
-                      style={{
-                        backgroundColor: 'var(--bg-tertiary)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '0.5rem 0.75rem',
-                        color: 'var(--text-primary)',
-                        width: '200px'
-                      }}
-                    >
-                      <option>Ask me every time</option>
-                      <option>Use most recent</option>
-                      <option>Keep local changes</option>
-                      <option>Keep remote changes</option>
-                    </select>
-                  </div>
-
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Debug mode</div>
-                      <div className="settings-description">Enable detailed logging for troubleshooting</div>
-                    </div>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={false} />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3>Storage</h3>
-                <div className="settings-group">
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Clear cache</div>
-                      <div className="settings-description">Remove temporary files</div>
-                    </div>
-                    <button className="btn btn-outline">Clear</button>
-                  </div>
-
-                  <div className="settings-item">
-                    <div>
-                      <div className="settings-label">Reset all settings</div>
-                      <div className="settings-description">Restore default configuration</div>
-                    </div>
-                    <button className="btn btn-outline" style={{ color: 'var(--accent-danger)' }}>Reset</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SettingsPage />
           )}
         </div>
       </div>

@@ -1,0 +1,65 @@
+/* Theme Stats Grid */
+.theme-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Theme Preview Section */
+.theme-preview-section {
+  margin-top: 2rem;
+}
+
+/* Code Preview Container */
+.code-preview-container {
+  background-color: #282c34;
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+/* Code Lines */
+.code-line {
+  color: #abb2bf;
+}
+
+.indented-1 {
+  margin-left: 20px;
+}
+
+.indented-2 {
+  margin-left: 40px;
+}
+
+/* Syntax Highlighting */
+.function-declaration {
+  color: #c678dd;
+}
+
+.function-name {
+  color: #61afef;
+}
+
+.parameter-name {
+  color: #e06c75;
+}
+
+.keyword {
+  color: #c678dd;
+}
+
+.method-name {
+  color: #61afef;
+}
+
+.number {
+  color: #d19a66;
+}
+
+/* Customize Theme Section */
+.theme-customize-section {
+  margin-top: 1.5rem;
+}
