@@ -20,31 +20,6 @@ let mainWindow: BrowserWindow | null = null;
 
 const execAsync = promisify(exec);
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
-
-ipcMain.on('get-names', async (event) => {
-  // Simulate fetching names (could be from a database, file, API, etc.)
-  const names = [
-    'Alice Johnson',
-    'Bob Smith',
-    'Carol Williams',
-    'Dave Brown',
-    'Eve Davis',
-    'Frank Miller',
-    'Grace Wilson',
-    'Henry Taylor'
-  ];
-
-  // Add a small delay to simulate processing time
-  setTimeout(() => {
-    event.reply('get-names', names);
-  }, 500);
-});
-
 ipcMain.on('get-system-info', async (event) => {
   // Gather system information using Node.js os module
   const systemInfo = {
@@ -112,6 +87,192 @@ ipcMain.on('get-ubuntu-extensions', async (event) => {
       error: error.message || 'Failed to get installed packages',
       extensions: []
     });
+  }
+});
+
+ipcMain.on('get-theme-config', async (event) => {
+  // const mockThemeConfig: ThemeConfig = {
+  //   uiTheme: 'Dark+',
+  //   iconTheme: 'Material Icons',
+  //   syntaxTheme: 'One Dark Pro',
+  //   font: 'JetBrains Mono'
+  // };
+
+  if (process.platform !== 'linux') {
+    event.reply('get-theme-config', {
+      error: 'This feature is only available on Linux systems',
+      themeConfig: null
+    });
+    return;
+  }
+  let themeConfig = {
+    uiTheme: 'Dark+',
+    iconTheme: 'Material Icons',
+    syntaxTheme: 'One Dark Pro',
+    font: 'JetBrains Mono'
+  };
+
+  try {
+    const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
+    themeConfig.uiTheme = gtkTheme.trim().replace(/'/g, '');
+  } catch (error) {
+    themeConfig.uiTheme = 'Unknown';
+  }
+
+  try {
+    const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
+    themeConfig.iconTheme = iconTheme.trim().replace(/'/g, '');
+  } catch (error) {
+    themeConfig.iconTheme = 'Unknown';
+  }
+
+  try {
+    const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
+    themeConfig.font = fontName.trim().replace(/'/g, '');
+  } catch (error) {
+    themeConfig.font = 'Unknown';
+  }
+
+  try {
+    const { stdout: darkMode } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
+    themeConfig.darkMode = darkMode.includes('dark');
+  } catch (error) {
+    themeConfig.darkMode = false;
+  }
+
+  event.reply('get-theme-config', themeConfig);
+});
+
+ipcMain.handle('get-linux-theme-info', async () => {
+  try {
+    // Check if running on Linux
+    if (process.platform !== 'linux') {
+      return {
+        error: 'This feature is only available on Linux systems',
+        themeInfo: null
+      };
+    }
+
+    const themeInfo: Record<string, any> = {};
+
+    // Basic theme information
+    try {
+      const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
+      themeInfo.uiTheme = gtkTheme.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.uiTheme = 'Unknown';
+    }
+
+    try {
+      const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
+      themeInfo.iconTheme = iconTheme.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.iconTheme = 'Unknown';
+    }
+
+    try {
+      const { stdout: cursorTheme } = await execAsync('gsettings get org.gnome.desktop.interface cursor-theme');
+      themeInfo.cursorTheme = cursorTheme.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.cursorTheme = 'Unknown';
+    }
+
+    // Font settings
+    try {
+      const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
+      themeInfo.font = fontName.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.font = 'Unknown';
+    }
+
+    try {
+      const { stdout: monospaceFont } = await execAsync('gsettings get org.gnome.desktop.interface monospace-font-name');
+      themeInfo.monospaceFont = monospaceFont.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.monospaceFont = 'Unknown';
+    }
+
+    try {
+      const { stdout: documentFont } = await execAsync('gsettings get org.gnome.desktop.interface document-font-name');
+      themeInfo.documentFont = documentFont.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.documentFont = 'Unknown';
+    }
+
+    try {
+      const { stdout: fontAntialiasing } = await execAsync('gsettings get org.gnome.desktop.interface font-antialiasing');
+      themeInfo.fontAntialiasing = fontAntialiasing.trim();
+    } catch (error) {
+      themeInfo.fontAntialiasing = 'Unknown';
+    }
+
+    try {
+      const { stdout: fontHinting } = await execAsync('gsettings get org.gnome.desktop.interface font-hinting');
+      themeInfo.fontHinting = fontHinting.trim();
+    } catch (error) {
+      themeInfo.fontHinting = 'Unknown';
+    }
+
+    // Color and appearance
+    try {
+      const { stdout: colorScheme } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
+      themeInfo.colorScheme = colorScheme.trim().replace(/'/g, '');
+      themeInfo.darkMode = colorScheme.includes('dark');
+
+      // Set syntax theme based on dark mode
+      themeInfo.syntaxTheme = themeInfo.darkMode ? 'One Dark Pro' : 'Light+';
+    } catch (error) {
+      themeInfo.colorScheme = 'Unknown';
+      themeInfo.darkMode = false;
+      themeInfo.syntaxTheme = 'One Dark Pro';
+    }
+
+    try {
+      const { stdout: accentColor } = await execAsync('gsettings get org.gnome.desktop.interface accent-color');
+      themeInfo.accentColor = accentColor.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.accentColor = 'Unknown';
+    }
+
+    try {
+      const { stdout: cursorSize } = await execAsync('gsettings get org.gnome.desktop.interface cursor-size');
+      themeInfo.cursorSize = cursorSize.trim();
+    } catch (error) {
+      themeInfo.cursorSize = 'Unknown';
+    }
+
+    // Window manager settings
+    try {
+      const { stdout: buttonLayout } = await execAsync('gsettings get org.gnome.desktop.wm.preferences button-layout');
+      themeInfo.buttonLayout = buttonLayout.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.buttonLayout = 'Unknown';
+    }
+
+    try {
+      const { stdout: animations } = await execAsync('gsettings get org.gnome.desktop.interface enable-animations');
+      themeInfo.animations = animations.trim() === 'true';
+    } catch (error) {
+      themeInfo.animations = true;
+    }
+
+    // Clock format
+    try {
+      const { stdout: clockFormat } = await execAsync('gsettings get org.gnome.desktop.interface clock-format');
+      themeInfo.clockFormat = clockFormat.trim().replace(/'/g, '');
+    } catch (error) {
+      themeInfo.clockFormat = 'Unknown';
+    }
+
+    return {
+      error: null,
+      themeInfo
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to get theme information',
+      themeInfo: null
+    };
   }
 });
 
