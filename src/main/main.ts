@@ -90,58 +90,58 @@ ipcMain.on('get-ubuntu-extensions', async (event) => {
   }
 });
 
-ipcMain.on('get-theme-config', async (event) => {
-  // const mockThemeConfig: ThemeConfig = {
-  //   uiTheme: 'Dark+',
-  //   iconTheme: 'Material Icons',
-  //   syntaxTheme: 'One Dark Pro',
-  //   font: 'JetBrains Mono'
-  // };
+// ipcMain.on('get-theme-config', async (event) => {
+//   // const mockThemeConfig: ThemeConfig = {
+//   //   uiTheme: 'Dark+',
+//   //   iconTheme: 'Material Icons',
+//   //   syntaxTheme: 'One Dark Pro',
+//   //   font: 'JetBrains Mono'
+//   // };
 
-  if (process.platform !== 'linux') {
-    event.reply('get-theme-config', {
-      error: 'This feature is only available on Linux systems',
-      themeConfig: null
-    });
-    return;
-  }
-  let themeConfig = {
-    uiTheme: 'Dark+',
-    iconTheme: 'Material Icons',
-    syntaxTheme: 'One Dark Pro',
-    font: 'JetBrains Mono'
-  };
+//   if (process.platform !== 'linux') {
+//     event.reply('get-theme-config', {
+//       error: 'This feature is only available on Linux systems',
+//       themeConfig: null
+//     });
+//     return;
+//   }
+//   let themeConfig = {
+//     uiTheme: 'Dark+',
+//     iconTheme: 'Material Icons',
+//     syntaxTheme: 'One Dark Pro',
+//     font: 'JetBrains Mono'
+//   };
 
-  try {
-    const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
-    themeConfig.uiTheme = gtkTheme.trim().replace(/'/g, '');
-  } catch (error) {
-    themeConfig.uiTheme = 'Unknown';
-  }
+//   try {
+//     const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
+//     themeConfig.uiTheme = gtkTheme.trim().replace(/'/g, '');
+//   } catch (error) {
+//     themeConfig.uiTheme = 'Unknown';
+//   }
 
-  try {
-    const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
-    themeConfig.iconTheme = iconTheme.trim().replace(/'/g, '');
-  } catch (error) {
-    themeConfig.iconTheme = 'Unknown';
-  }
+//   try {
+//     const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
+//     themeConfig.iconTheme = iconTheme.trim().replace(/'/g, '');
+//   } catch (error) {
+//     themeConfig.iconTheme = 'Unknown';
+//   }
 
-  try {
-    const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
-    themeConfig.font = fontName.trim().replace(/'/g, '');
-  } catch (error) {
-    themeConfig.font = 'Unknown';
-  }
+//   try {
+//     const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
+//     themeConfig.font = fontName.trim().replace(/'/g, '');
+//   } catch (error) {
+//     themeConfig.font = 'Unknown';
+//   }
 
-  try {
-    const { stdout: darkMode } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
-    themeConfig.darkMode = darkMode.includes('dark');
-  } catch (error) {
-    themeConfig.darkMode = false;
-  }
+//   try {
+//     const { stdout: darkMode } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
+//     themeConfig.darkMode = darkMode.includes('dark');
+//   } catch (error) {
+//     themeConfig.darkMode = false;
+//   }
 
-  event.reply('get-theme-config', themeConfig);
-});
+//   event.reply('get-theme-config', themeConfig);
+// });
 
 ipcMain.handle('get-linux-theme-info', async () => {
   try {
@@ -149,7 +149,7 @@ ipcMain.handle('get-linux-theme-info', async () => {
     if (process.platform !== 'linux') {
       return {
         error: 'This feature is only available on Linux systems',
-        themeInfo: null
+        themeInfo: null,
       };
     }
 
@@ -272,6 +272,88 @@ ipcMain.handle('get-linux-theme-info', async () => {
     return {
       error: error instanceof Error ? error.message : 'Failed to get theme information',
       themeInfo: null
+    };
+  }
+});
+
+ipcMain.handle('get-ubuntu-extensions', async () => {
+  try {
+    // Check if running on Linux
+    if (process.platform !== 'linux') {
+      return {
+        error: 'This feature is only available on Linux systems',
+        extensions: [],
+      };
+    }
+
+    const { stdout, stderr } = await execAsync('gnome-extensions list --details');
+
+    if (stderr && !stdout) {
+      return {
+        error: stderr,
+        extensions: [],
+      };
+    }
+
+    // Split by empty lines to get each extension block
+    const extensionBlocks = stdout.split('\n\n');
+
+    // Parse each extension block
+    const extensions = extensionBlocks.map(block => {
+      const lines = block.split('\n');
+      if (lines.length < 2) return null;
+
+      // First line contains the extension ID
+      const extensionId = lines[0].trim();
+
+      // Extract name, description and state from the remaining lines
+      let name = 'Unknown';
+      let version = 'Unknown';
+      let state = 'UNKNOWN';
+
+      for (const line of lines.slice(1)) {
+        if (line.includes('Name:')) {
+          name = line.split('Name:')[1].trim();
+        } else if (line.includes('Version:')) {
+          version = line.split('Version:')[1].trim();
+        } else if (line.includes('State:')) {
+          state = line.split('State:')[1].trim();
+        }
+      }
+
+      return {
+        name,
+        id: extensionId,
+        enabled: state === 'ENABLED',
+        version,
+        enable_link: `gnome-extensions enable ${extensionId}`,
+        disable_link: `gnome-extensions disable ${extensionId}`
+      };
+    }).filter(ext => ext !== null); // Remove any null entries
+
+    return {
+      error: null,
+      extensions
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Failed to get installed extensions',
+      extensions: []
+    };
+  }
+});
+
+ipcMain.handle('execute-command', async (_, command) => {
+  try {
+    const { stdout, stderr } = await execAsync(command);
+    if (stderr) {
+      return { error: stderr, success: false };
+    }
+    return { error: null, success: true, output: stdout };
+  } catch (error) {
+    return {
+      error: 'Failed to execute command',
+      success: false,
     };
   }
 });
