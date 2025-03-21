@@ -2,7 +2,11 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'get-system-info' | 'get-linux-theme-info';
+export type Channels =
+  | 'get-system-info'
+  | 'get-linux-theme-info'
+  | 'get-ubuntu-extensions'
+  | 'execute-command';
 
 const electronHandler = {
   ipcRenderer: {

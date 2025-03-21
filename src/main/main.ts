@@ -149,7 +149,7 @@ ipcMain.handle('get-linux-theme-info', async () => {
     if (process.platform !== 'linux') {
       return {
         error: 'This feature is only available on Linux systems',
-        themeInfo: null
+        themeInfo: null,
       };
     }
 
@@ -282,7 +282,7 @@ ipcMain.handle('get-ubuntu-extensions', async () => {
     if (process.platform !== 'linux') {
       return {
         error: 'This feature is only available on Linux systems',
-        extensions: []
+        extensions: [],
       };
     }
 
@@ -291,7 +291,7 @@ ipcMain.handle('get-ubuntu-extensions', async () => {
     if (stderr && !stdout) {
       return {
         error: stderr,
-        extensions: []
+        extensions: [],
       };
     }
 
@@ -352,8 +352,8 @@ ipcMain.handle('execute-command', async (_, command) => {
     return { error: null, success: true, output: stdout };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : 'Failed to execute command',
-      success: false
+      error: 'Failed to execute command',
+      success: false,
     };
   }
 });

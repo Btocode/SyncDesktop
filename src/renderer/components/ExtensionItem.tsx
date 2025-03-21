@@ -7,7 +7,7 @@ interface ExtensionItemProps {
   onToggle: (extensionId: string) => void;
 }
 
-const ExtensionItem: React.FC<ExtensionItemProps> = ({ extension, onToggle }) => {
+function ExtensionItem({ extension, onToggle }: ExtensionItemProps) {
   return (
     <div className="extension-item">
       <div className="extension-info">
@@ -15,7 +15,9 @@ const ExtensionItem: React.FC<ExtensionItemProps> = ({ extension, onToggle }) =>
         <div className="extension-version">v{extension.version}</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <div className={`extension-status ${extension.enabled ? 'status-enabled' : 'status-disabled'}`}>
+        <div
+          className={`extension-status ${extension.enabled ? 'status-enabled' : 'status-disabled'}`}
+        >
           {extension.enabled ? 'Enabled' : 'Disabled'}
         </div>
         <label className="extension-toggle" style={{ marginLeft: '1rem' }}>
@@ -24,7 +26,7 @@ const ExtensionItem: React.FC<ExtensionItemProps> = ({ extension, onToggle }) =>
             checked={extension.enabled}
             onChange={() => onToggle(extension.id)}
           />
-          <span className="extension-toggle-slider"></span>
+          <span className="extension-toggle-slider" />
         </label>
       </div>
     </div>
