@@ -1,13 +1,155 @@
-import React from 'react';
-import TerminalConfigDisplay from '../components/TerminalConfigDisplay';
-import { TerminalConfig } from '../types';
-import { commonStyles, terminalTheme } from '../styles/theme';
+import React, { useState, useEffect } from 'react';
+import TerminalTabs from '../components/device-terminal/TerminalTabs';
+import CommandLibrary from '../components/device-terminal/CommandLibrary';
+import SnippetManager from '../components/device-terminal/SnippetManager';
+import TerminalConfig from '../components/device-terminal/TerminalConfig';
+import { TerminalConfig as TerminalConfigType } from '../types';
+import '../styles/TerminalPage.css';
 
-interface TerminalPageProps {
-  terminalConfig: TerminalConfig;
+interface TerminalInfoResult {
+  error: string | null;
+  terminalInfo: string | null;
 }
 
-function TerminalPage({ terminalConfig }: TerminalPageProps) {
+const terminalConfig: TerminalConfigType = {
+  shell: '/bin/zsh',
+  font: 'Fira Code',
+  fontSize: 14,
+  lineHeight: 1.5,
+  theme: 'One Dark Pro',
+  cursorStyle: 'block',
+  scrollback: 10000,
+  customCommands: [
+    'alias gs="git status"',
+    'alias gc="git commit"',
+    'alias gl="git log --oneline"',
+    'export PATH="$HOME/.local/bin:$PATH"'
+  ]
+};
+
+const TerminalPage: React.FC = () => {
+  const [terminalInfo, setTerminalInfo] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('config');
+  const [currentConfig, setCurrentConfig] = useState<TerminalConfigType>(terminalConfig);
+  const [selectedShell, setSelectedShell] = useState(terminalConfig.shell);
+  const [availableShells, setAvailableShells] = useState<string[]>(['/bin/bash', '/bin/zsh', '/bin/fish']);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // State for adding snippets
+  const [newSnippetName, setNewSnippetName] = useState('');
+  const [newSnippetContent, setNewSnippetContent] = useState('');
+  const [newSnippetCategory, setNewSnippetCategory] = useState('');
+
+  // Sample command library
+  const [commandLibrary, setCommandLibrary] = useState([
+    { category: 'Git', name: 'Status', command: 'git status', description: 'Show the working tree status' },
+    { category: 'Git', name: 'Commit', command: 'git commit -m "message"', description: 'Record changes to the repository' },
+    { category: 'Git', name: 'Push', command: 'git push origin main', description: 'Update remote refs along with associated objects' },
+    { category: 'File System', name: 'List Files', command: 'ls -la', description: 'List directory contents with details' },
+    { category: 'File System', name: 'Change Directory', command: 'cd directory_name', description: 'Change the current directory' },
+    { category: 'Network', name: 'Check Connectivity', command: 'ping google.com', description: 'Send ICMP ECHO_REQUEST to network hosts' },
+    { category: 'Network', name: 'Show IP', command: 'ip addr show', description: 'Display IP addresses and network interfaces' },
+    { category: 'System', name: 'Process Status', command: 'ps aux', description: 'Report a snapshot of current processes' },
+    { category: 'System', name: 'Memory Usage', command: 'free -h', description: 'Display amount of free and used memory in the system' },
+  ]);
+
+  // Sample snippets
+  const [snippets, setSnippets] = useState([
+    { id: 1, name: 'Git Clone', content: 'git clone https://github.com/username/repo.git', category: 'Git' },
+    { id: 2, name: 'Docker Run', content: 'docker run -d -p 80:80 nginx', category: 'Docker' },
+    { id: 3, name: 'Find Files', content: 'find . -name "*.js" -type f', category: 'File System' },
+  ]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchTerminalInfo = async () => {
+      try {
+        setLoading(true);
+        const result = (await window.electron.ipcRenderer.invoke(
+          'get-terminal-info'
+        )) as TerminalInfoResult;
+
+        console.log(result);
+        if (result.error) {
+          setError(result.error);
+          console.error(result.error);
+        } else {
+          setTerminalInfo(result.terminalInfo);
+        }
+      } catch (err) {
+        setError('Failed to fetch terminal information');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTerminalInfo();
+  }, []);
+
+  const handleSaveConfig = () => {
+    // Here you would save the configuration to the system
+    setEditMode(false);
+    // Mock saving
+    setTimeout(() => {
+      alert('Configuration saved successfully!');
+    }, 500);
+  };
+
+  const handleAddCommand = () => {
+    const newCommand = prompt('Enter a new command:');
+    if (newCommand) {
+      setCurrentConfig({
+        ...currentConfig,
+        customCommands: [...currentConfig.customCommands, newCommand]
+      });
+    }
+  };
+
+  const handleRemoveCommand = (index: number) => {
+    const updatedCommands = [...currentConfig.customCommands];
+    updatedCommands.splice(index, 1);
+    setCurrentConfig({
+      ...currentConfig,
+      customCommands: updatedCommands
+    });
+  };
+
+  const handleAddSnippet = (name: string, content: string, category: string) => {
+    setSnippets([
+      ...snippets,
+      { id: snippets.length + 1, name, content, category: category || 'Uncategorized' }
+    ]);
+  };
+
+  const handleCopyCommand = (command: string) => {
+    navigator.clipboard.writeText(command);
+    // Show a temporary notification
+    const notification = document.createElement('div');
+    notification.textContent = 'Copied to clipboard!';
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = 'var(--accent-success)';
+    notification.style.color = 'white';
+    notification.style.padding = '10px 20px';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '1000';
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 2000);
+  };
+
+  const filteredCommands = commandLibrary.filter(cmd =>
+    cmd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cmd.command.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cmd.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
       <div className="dashboard-header">
@@ -17,41 +159,35 @@ function TerminalPage({ terminalConfig }: TerminalPageProps) {
         </div>
       </div>
 
-      <TerminalConfigDisplay config={terminalConfig} />
+      <TerminalTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div style={{ marginTop: '1.5rem' }}>
-        <button className="btn btn-primary">Edit Configuration</button>
-      </div>
+      {activeTab === 'config' && (
+        <TerminalConfig
+          currentConfig={currentConfig}
+          setCurrentConfig={setCurrentConfig}
+          editMode={false}
+          setEditMode={() => {}}
+        />
+      )}
 
-      <div style={{ marginTop: '2rem' }}>
-        <h3>Terminal Preview</h3>
-        <div className="terminal-config" style={{ marginTop: '1rem', height: '300px', overflow: 'auto', backgroundColor: terminalTheme.background }}>
-          {Array.from({ length: 15 }).map((_, index) => (
-            <div key={index} className="config-line">
-              <span className="line-number">{index + 1}</span>
-              <span className="line-content">
-                {index === 0 && <span><span style={{ color: terminalTheme.blue }}>user@machine</span>:<span style={{ color: terminalTheme.yellow }}>~</span>$ ls -la</span>}
-                {index === 1 && <span>total 112</span>}
-                {index === 2 && <span>drwxr-xr-x  24 user user  4096 Jun 10 14:23 <span style={{ color: terminalTheme.blue }}>.</span></span>}
-                {index === 3 && <span>drwxr-xr-x   3 root root  4096 Apr 22 09:10 <span style={{ color: terminalTheme.blue }}>.</span></span>}
-                {index === 4 && <span>-rw-------   1 user user 12345 Jun  9 22:15 .bash_history</span>}
-                {index === 5 && <span>-rw-r--r--   1 user user   220 Apr 22 09:10 .bash_logout</span>}
-                {index === 6 && <span>-rw-r--r--   1 user user  3771 Apr 22 09:10 .bashrc</span>}
-                {index === 7 && <span>drwxr-xr-x  12 user user  4096 May 28 10:42 <span style={{ color: terminalTheme.blue }}>Documents</span></span>}
-                {index === 8 && <span>drwxr-xr-x   4 user user  4096 Jun  2 18:30 <span style={{ color: terminalTheme.blue }}>Downloads</span></span>}
-                {index === 9 && <span><span style={{ color: terminalTheme.blue }}>user@machine</span>:<span style={{ color: terminalTheme.yellow }}>~</span>$ cd Documents</span>}
-                {index === 10 && <span><span style={{ color: terminalTheme.blue }}>user@machine</span>:<span style={{ color: terminalTheme.yellow }}>~/Documents</span>$ git status</span>}
-                {index === 11 && <span>On branch <span style={{ color: terminalTheme.yellow }}>main</span></span>}
-                {index === 12 && <span>Your branch is up to date with 'origin/main'.</span>}
-                {index === 13 && <span>nothing to commit, working tree clean</span>}
-                {index === 14 && <span><span style={{ color: terminalTheme.blue }}>user@machine</span>:<span style={{ color: terminalTheme.yellow }}>~/Documents</span>$ _</span>}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {activeTab === 'commands' && (
+        <CommandLibrary
+          commandLibrary={commandLibrary}
+          searchTerm={searchTerm}
+          handleCopyCommand={handleCopyCommand}
+        />
+      )}
+
+      {activeTab === 'snippets' && (
+        <SnippetManager
+          snippets={snippets}
+          setSnippets={setSnippets}
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </div>
   );
-}
+};
 
 export default TerminalPage;

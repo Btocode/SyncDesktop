@@ -73,22 +73,6 @@ const mockExtensions: Extension[] = [
   { id: 'ext-12', name: 'Live Server', version: '5.7.9', enabled: false }
 ];
 
-const mockTerminalConfig: TerminalConfig = {
-  shell: '/bin/zsh',
-  font: 'Fira Code',
-  fontSize: 14,
-  lineHeight: 1.5,
-  theme: 'One Dark Pro',
-  cursorStyle: 'block',
-  scrollback: 10000,
-  customCommands: [
-    'alias gs="git status"',
-    'alias gc="git commit"',
-    'alias gl="git log --oneline"',
-    'export PATH="$HOME/.local/bin:$PATH"'
-  ]
-};
-
 const mockThemeConfig: ThemeConfig = {
   uiTheme: 'One Dark Pro',
   iconTheme: 'Nord',
@@ -115,7 +99,6 @@ function Dashboard() {
   const [selectedDevice, setSelectedDevice] = React.useState<string | null>(null);
   const [devices, setDevices] = React.useState<DeviceConfig[]>(mockDevices);
   const [extensions, setExtensions] = React.useState<Extension[]>(mockExtensions);
-  const [terminalConfig, setTerminalConfig] = React.useState<TerminalConfig>(mockTerminalConfig);
   const [themeConfig, setThemeConfig] = React.useState<ThemeConfig>(mockThemeConfig);
 
   // Handle device selection
@@ -136,15 +119,6 @@ function Dashboard() {
       device.id === deviceId
         ? { ...device, syncEnabled: !device.syncEnabled }
         : device
-    ));
-  };
-
-  // Toggle extension
-  const handleToggleExtension = (extensionId: string) => {
-    setExtensions(extensions.map(ext =>
-      ext.id === extensionId
-        ? { ...ext, enabled: !ext.enabled }
-        : ext
     ));
   };
 
@@ -171,24 +145,17 @@ function Dashboard() {
             <DeviceDetailsPage
               device={selectedDeviceData}
               extensions={extensions}
-              terminalConfig={terminalConfig}
               themeConfig={themeConfig}
-              onToggleExtension={handleToggleExtension}
               onBackClick={handleBackToDevices}
             />
           )}
 
           {activeTab === 'extensions' && (
-            <ExtensionsPage
-              extensions={extensions}
-              onToggleExtension={handleToggleExtension}
-            />
+            <ExtensionsPage />
           )}
 
           {activeTab === 'terminal' && (
-            <TerminalPage
-              terminalConfig={terminalConfig}
-            />
+            <TerminalPage />
           )}
 
           {activeTab === 'themes' && (
