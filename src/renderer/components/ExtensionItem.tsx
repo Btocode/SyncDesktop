@@ -1,5 +1,6 @@
 import React from 'react';
 import { Extension } from '../types';
+import '../styles/ExtensionsPage.css';
 
 interface ExtensionItemProps {
   extension: Extension;
@@ -17,13 +18,13 @@ const ExtensionItem: React.FC<ExtensionItemProps> = ({ extension, onToggle }) =>
         <div className={`extension-status ${extension.enabled ? 'status-enabled' : 'status-disabled'}`}>
           {extension.enabled ? 'Enabled' : 'Disabled'}
         </div>
-        <label className="toggle-switch" style={{ marginLeft: '1rem' }}>
+        <label className="extension-toggle" style={{ marginLeft: '1rem' }}>
           <input
             type="checkbox"
             checked={extension.enabled}
             onChange={() => onToggle(extension.id)}
           />
-          <span className="toggle-slider"></span>
+          <span className="extension-toggle-slider"></span>
         </label>
       </div>
     </div>
