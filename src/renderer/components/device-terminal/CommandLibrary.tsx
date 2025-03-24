@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface CommandLibraryProps {
   commandLibrary: Array<{ category: string; name: string; command: string; description: string }>;
   searchTerm: string;
+  setSearchTerm: (searchTerm: string) => void;
   handleCopyCommand: (command: string) => void;
 }
 
-const CommandLibrary: React.FC<CommandLibraryProps> = ({ commandLibrary, searchTerm, handleCopyCommand }) => {
+function CommandLibrary({ commandLibrary, searchTerm, setSearchTerm, handleCopyCommand }: CommandLibraryProps) {
+
+
   const filteredCommands = commandLibrary.filter(cmd =>
     cmd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cmd.command.toLowerCase().includes(searchTerm.toLowerCase()) ||

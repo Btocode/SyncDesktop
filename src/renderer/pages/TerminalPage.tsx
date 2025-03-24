@@ -27,7 +27,7 @@ const terminalConfig: TerminalConfigType = {
   ]
 };
 
-const TerminalPage: React.FC = () => {
+function TerminalPage() {
   const [terminalInfo, setTerminalInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +174,7 @@ const TerminalPage: React.FC = () => {
         <CommandLibrary
           commandLibrary={commandLibrary}
           searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
           handleCopyCommand={handleCopyCommand}
         />
       )}
