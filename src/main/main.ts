@@ -343,6 +343,16 @@ ipcMain.handle('get-ubuntu-extensions', async () => {
   }
 });
 
+ipcMain.handle('get-terminal-info', async () => {
+  try {
+    const { stdout, stderr } = await execAsync('gnome-terminal --version');
+    return { error: null, terminalInfo: stdout };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Failed to get terminal information', terminalInfo: null };
+  }
+});
+
+
 ipcMain.handle('execute-command', async (_, command) => {
   try {
     const { stdout, stderr } = await execAsync(command);

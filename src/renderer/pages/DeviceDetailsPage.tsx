@@ -9,18 +9,14 @@ import '../styles/device-details.css';
 interface DeviceDetailsPageProps {
   device: DeviceConfig;
   extensions: Extension[];
-  terminalConfig: TerminalConfig;
   themeConfig: ThemeConfig;
-  onToggleExtension: (extensionId: string) => void;
   onBackClick: () => void;
 }
 
 function DeviceDetailsPage({
   device,
   extensions,
-  terminalConfig,
   themeConfig,
-  onToggleExtension,
   onBackClick
 }: DeviceDetailsPageProps) {
   const [activeTab, setActiveTab] = React.useState('overview');
