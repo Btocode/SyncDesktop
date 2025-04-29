@@ -1,18 +1,26 @@
 {
   "compilerOptions": {
-    "incremental": true,
-    "target": "es2022",
-    "module": "commonjs",
-    "lib": ["dom", "es2022"],
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "jsx": "react-jsx",
-    "strict": true,
-    "sourceMap": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "allowJs": true,
-    "outDir": ".erb/dll"
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["react", "react-dom", "node"]
   },
-  "exclude": ["test", "release/build", "release/app/dist", ".erb/dll"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
