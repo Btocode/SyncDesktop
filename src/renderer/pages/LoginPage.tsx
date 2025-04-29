@@ -88,27 +88,29 @@ function LoginPage(): React.ReactElement {
         <div className="auth-animation-side">
           <div className="device-sync-container">
             <h1 className="device-sync-title">SyncD</h1>
-            <p className="device-sync-subtitle">Seamlessly sync your data across all your devices</p>
+            <p className="device-sync-subtitle">
+              Seamlessly sync your data across all your devices
+            </p>
 
             <div className="device-sync-animation">
               <div className="device device-left">
                 <div className="device-screen">
                   <div className="sync-dots">
-                    <div className="sync-dot"></div>
-                    <div className="sync-dot"></div>
-                    <div className="sync-dot"></div>
+                    <div className="sync-dot" />
+                    <div className="sync-dot" />
+                    <div className="sync-dot" />
                   </div>
                 </div>
               </div>
 
-              <div className="sync-line"></div>
+              <div className="sync-line" />
 
               <div className="device device-right">
                 <div className="device-screen">
                   <div className="sync-dots">
-                    <div className="sync-dot"></div>
-                    <div className="sync-dot"></div>
-                    <div className="sync-dot"></div>
+                    <div className="sync-dot" />
+                    <div className="sync-dot" />
+                    <div className="sync-dot" />
                   </div>
                 </div>
               </div>
@@ -196,11 +198,17 @@ function LoginPage(): React.ReactElement {
                   onChange={handleChange}
                 />
                 {validationErrors.password && (
-                  <div className="error-message">{validationErrors.password}</div>
+                  <div className="error-message">
+                    {validationErrors.password}
+                  </div>
                 )}
               </div>
 
-              <button type="submit" className="auth-button" disabled={isLoading}>
+              <button
+                type="submit"
+                className="auth-button"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <span className="loading-spinner" />
@@ -223,7 +231,11 @@ function LoginPage(): React.ReactElement {
 
             <div className="auth-footer">
               Don&apos;t have an account?{' '}
-              <button className="auth-link" onClick={switchToSignup} type="button">
+              <button
+                className="auth-link"
+                onClick={switchToSignup}
+                type="button"
+              >
                 Sign Up
               </button>
             </div>
