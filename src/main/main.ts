@@ -20,6 +20,68 @@ let mainWindow: BrowserWindow | null = null;
 
 const execAsync = promisify(exec);
 
+interface DeviceConfig {
+  id: string;
+  name: string;
+  type: string;
+  lastSynced: string;
+  status: 'synced' | 'syncing' | 'error';
+  syncEnabled: boolean;
+  extensionsCount: {
+    enabled: number;
+    disabled: number;
+    total: number;
+  };
+  terminalConfigured: boolean;
+  themeConfigured: boolean;
+}
+
+ipcMain.handle('get-device-config', async () => {
+  try {
+    // Get system information
+    const platform = os.platform();
+    const hostname = os.hostname();
+
+    // Get current timestamp
+    const now = new Date();
+    const lastSynced = now.toISOString().replace('T', ' ').split('.')[0];
+
+    // Determine platform type
+    let platformType = 'Unknown';
+    if (platform === 'darwin') {
+      platformType = 'macOS';
+    } else if (platform === 'win32') {
+      platformType = 'Windows';
+    } else if (platform === 'linux') {
+      platformType = 'Linux';
+    }
+
+    // Get extensions count (you'll need to implement this based on your needs)
+    const extensionsCount = {
+      enabled: 42, // Replace with actual count
+      disabled: 7, // Replace with actual count
+      total: 49, // Replace with actual count
+    };
+
+    const deviceConfig: DeviceConfig = {
+      id: `device-${hostname}`,
+      name: hostname,
+      type: platformType,
+      lastSynced,
+      status: 'synced',
+      syncEnabled: true,
+      extensionsCount,
+      terminalConfigured: true, // You can check actual configuration
+      themeConfigured: true, // You can check actual configuration
+    };
+
+    return deviceConfig;
+  } catch (error) {
+    console.error('Error getting device config:', error);
+    throw error; // This will be caught in the renderer
+  }
+});
+
 ipcMain.on('get-system-info', async (event) => {
   // Gather system information using Node.js os module
   const systemInfo = {
@@ -27,12 +89,12 @@ ipcMain.on('get-system-info', async (event) => {
     arch: os.arch(),
     hostname: os.hostname(),
     cpus: os.cpus().length,
-    totalMemory: Math.round(os.totalmem() / (1024 * 1024 * 1024)) + ' GB',
-    freeMemory: Math.round(os.freemem() / (1024 * 1024 * 1024)) + ' GB',
-    uptime: Math.floor(os.uptime() / 3600) + ' hours',
+    totalMemory: `${Math.round(os.totalmem() / (1024 * 1024 * 1024))} GB`,
+    freeMemory: `${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB`,
+    uptime: `${Math.floor(os.uptime() / 3600)} hours`,
     userInfo: os.userInfo().username,
     nodeVersion: process.versions.node,
-    electronVersion: process.versions.electron
+    electronVersion: process.versions.electron,
   };
 
   // Add a small delay to simulate processing time
@@ -47,26 +109,28 @@ ipcMain.on('get-ubuntu-extensions', async (event) => {
     if (process.platform !== 'linux') {
       event.reply('get-ubuntu-extensions', {
         error: 'This feature is only available on Linux systems',
-        extensions: []
+        extensions: [],
       });
       return;
     }
 
     // Run the apt list --installed command to get installed packages
-    const { stdout, stderr } = await execAsync('apt list --installed | head -n 50');
+    const { stdout, stderr } = await execAsync(
+      'apt list --installed | head -n 50',
+    );
 
     if (stderr && !stdout) {
       event.reply('get-ubuntu-extensions', {
         error: stderr,
-        extensions: []
+        extensions: [],
       });
       return;
     }
 
     // Parse the output to get package names and versions
-    const lines = stdout.split('\n').filter(line => line.trim() !== '');
+    const lines = stdout.split('\n').filter((line) => line.trim() !== '');
     // Skip the first line which is just a header
-    const packages = lines.slice(1).map(line => {
+    const packages = lines.slice(1).map((line) => {
       const parts = line.split('/');
       const packageName = parts[0];
       const versionInfo = line.match(/now\s([^\s]+)/);
@@ -74,74 +138,24 @@ ipcMain.on('get-ubuntu-extensions', async (event) => {
 
       return {
         name: packageName.trim(),
-        version: version
+        version: version,
       };
     });
 
     event.reply('get-ubuntu-extensions', {
       error: null,
-      extensions: packages
+      extensions: packages,
     });
   } catch (error) {
     event.reply('get-ubuntu-extensions', {
-      error: error instanceof Error ? error.message : 'Failed to get installed packages',
-      extensions: []
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to get installed packages',
+      extensions: [],
     });
   }
 });
-
-// ipcMain.on('get-theme-config', async (event) => {
-//   // const mockThemeConfig: ThemeConfig = {
-//   //   uiTheme: 'Dark+',
-//   //   iconTheme: 'Material Icons',
-//   //   syntaxTheme: 'One Dark Pro',
-//   //   font: 'JetBrains Mono'
-//   // };
-
-//   if (process.platform !== 'linux') {
-//     event.reply('get-theme-config', {
-//       error: 'This feature is only available on Linux systems',
-//       themeConfig: null
-//     });
-//     return;
-//   }
-//   let themeConfig = {
-//     uiTheme: 'Dark+',
-//     iconTheme: 'Material Icons',
-//     syntaxTheme: 'One Dark Pro',
-//     font: 'JetBrains Mono'
-//   };
-
-//   try {
-//     const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
-//     themeConfig.uiTheme = gtkTheme.trim().replace(/'/g, '');
-//   } catch (error) {
-//     themeConfig.uiTheme = 'Unknown';
-//   }
-
-//   try {
-//     const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
-//     themeConfig.iconTheme = iconTheme.trim().replace(/'/g, '');
-//   } catch (error) {
-//     themeConfig.iconTheme = 'Unknown';
-//   }
-
-//   try {
-//     const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
-//     themeConfig.font = fontName.trim().replace(/'/g, '');
-//   } catch (error) {
-//     themeConfig.font = 'Unknown';
-//   }
-
-//   try {
-//     const { stdout: darkMode } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
-//     themeConfig.darkMode = darkMode.includes('dark');
-//   } catch (error) {
-//     themeConfig.darkMode = false;
-//   }
-
-//   event.reply('get-theme-config', themeConfig);
-// });
 
 ipcMain.handle('get-linux-theme-info', async () => {
   try {
@@ -157,21 +171,27 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     // Basic theme information
     try {
-      const { stdout: gtkTheme } = await execAsync('gsettings get org.gnome.desktop.interface gtk-theme');
+      const { stdout: gtkTheme } = await execAsync(
+        'gsettings get org.gnome.desktop.interface gtk-theme',
+      );
       themeInfo.uiTheme = gtkTheme.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.uiTheme = 'Unknown';
     }
 
     try {
-      const { stdout: iconTheme } = await execAsync('gsettings get org.gnome.desktop.interface icon-theme');
+      const { stdout: iconTheme } = await execAsync(
+        'gsettings get org.gnome.desktop.interface icon-theme',
+      );
       themeInfo.iconTheme = iconTheme.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.iconTheme = 'Unknown';
     }
 
     try {
-      const { stdout: cursorTheme } = await execAsync('gsettings get org.gnome.desktop.interface cursor-theme');
+      const { stdout: cursorTheme } = await execAsync(
+        'gsettings get org.gnome.desktop.interface cursor-theme',
+      );
       themeInfo.cursorTheme = cursorTheme.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.cursorTheme = 'Unknown';
@@ -179,35 +199,45 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     // Font settings
     try {
-      const { stdout: fontName } = await execAsync('gsettings get org.gnome.desktop.interface font-name');
+      const { stdout: fontName } = await execAsync(
+        'gsettings get org.gnome.desktop.interface font-name',
+      );
       themeInfo.font = fontName.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.font = 'Unknown';
     }
 
     try {
-      const { stdout: monospaceFont } = await execAsync('gsettings get org.gnome.desktop.interface monospace-font-name');
+      const { stdout: monospaceFont } = await execAsync(
+        'gsettings get org.gnome.desktop.interface monospace-font-name',
+      );
       themeInfo.monospaceFont = monospaceFont.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.monospaceFont = 'Unknown';
     }
 
     try {
-      const { stdout: documentFont } = await execAsync('gsettings get org.gnome.desktop.interface document-font-name');
+      const { stdout: documentFont } = await execAsync(
+        'gsettings get org.gnome.desktop.interface document-font-name',
+      );
       themeInfo.documentFont = documentFont.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.documentFont = 'Unknown';
     }
 
     try {
-      const { stdout: fontAntialiasing } = await execAsync('gsettings get org.gnome.desktop.interface font-antialiasing');
+      const { stdout: fontAntialiasing } = await execAsync(
+        'gsettings get org.gnome.desktop.interface font-antialiasing',
+      );
       themeInfo.fontAntialiasing = fontAntialiasing.trim();
     } catch (error) {
       themeInfo.fontAntialiasing = 'Unknown';
     }
 
     try {
-      const { stdout: fontHinting } = await execAsync('gsettings get org.gnome.desktop.interface font-hinting');
+      const { stdout: fontHinting } = await execAsync(
+        'gsettings get org.gnome.desktop.interface font-hinting',
+      );
       themeInfo.fontHinting = fontHinting.trim();
     } catch (error) {
       themeInfo.fontHinting = 'Unknown';
@@ -215,7 +245,9 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     // Color and appearance
     try {
-      const { stdout: colorScheme } = await execAsync('gsettings get org.gnome.desktop.interface color-scheme');
+      const { stdout: colorScheme } = await execAsync(
+        'gsettings get org.gnome.desktop.interface color-scheme',
+      );
       themeInfo.colorScheme = colorScheme.trim().replace(/'/g, '');
       themeInfo.darkMode = colorScheme.includes('dark');
 
@@ -228,14 +260,18 @@ ipcMain.handle('get-linux-theme-info', async () => {
     }
 
     try {
-      const { stdout: accentColor } = await execAsync('gsettings get org.gnome.desktop.interface accent-color');
+      const { stdout: accentColor } = await execAsync(
+        'gsettings get org.gnome.desktop.interface accent-color',
+      );
       themeInfo.accentColor = accentColor.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.accentColor = 'Unknown';
     }
 
     try {
-      const { stdout: cursorSize } = await execAsync('gsettings get org.gnome.desktop.interface cursor-size');
+      const { stdout: cursorSize } = await execAsync(
+        'gsettings get org.gnome.desktop.interface cursor-size',
+      );
       themeInfo.cursorSize = cursorSize.trim();
     } catch (error) {
       themeInfo.cursorSize = 'Unknown';
@@ -243,14 +279,18 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     // Window manager settings
     try {
-      const { stdout: buttonLayout } = await execAsync('gsettings get org.gnome.desktop.wm.preferences button-layout');
+      const { stdout: buttonLayout } = await execAsync(
+        'gsettings get org.gnome.desktop.wm.preferences button-layout',
+      );
       themeInfo.buttonLayout = buttonLayout.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.buttonLayout = 'Unknown';
     }
 
     try {
-      const { stdout: animations } = await execAsync('gsettings get org.gnome.desktop.interface enable-animations');
+      const { stdout: animations } = await execAsync(
+        'gsettings get org.gnome.desktop.interface enable-animations',
+      );
       themeInfo.animations = animations.trim() === 'true';
     } catch (error) {
       themeInfo.animations = true;
@@ -258,7 +298,9 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     // Clock format
     try {
-      const { stdout: clockFormat } = await execAsync('gsettings get org.gnome.desktop.interface clock-format');
+      const { stdout: clockFormat } = await execAsync(
+        'gsettings get org.gnome.desktop.interface clock-format',
+      );
       themeInfo.clockFormat = clockFormat.trim().replace(/'/g, '');
     } catch (error) {
       themeInfo.clockFormat = 'Unknown';
@@ -266,12 +308,15 @@ ipcMain.handle('get-linux-theme-info', async () => {
 
     return {
       error: null,
-      themeInfo
+      themeInfo,
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : 'Failed to get theme information',
-      themeInfo: null
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to get theme information',
+      themeInfo: null,
     };
   }
 });
@@ -286,7 +331,9 @@ ipcMain.handle('get-ubuntu-extensions', async () => {
       };
     }
 
-    const { stdout, stderr } = await execAsync('gnome-extensions list --details');
+    const { stdout, stderr } = await execAsync(
+      'gnome-extensions list --details',
+    );
 
     if (stderr && !stdout) {
       return {
@@ -299,46 +346,51 @@ ipcMain.handle('get-ubuntu-extensions', async () => {
     const extensionBlocks = stdout.split('\n\n');
 
     // Parse each extension block
-    const extensions = extensionBlocks.map(block => {
-      const lines = block.split('\n');
-      if (lines.length < 2) return null;
+    const extensions = extensionBlocks
+      .map((block) => {
+        const lines = block.split('\n');
+        if (lines.length < 2) return null;
 
-      // First line contains the extension ID
-      const extensionId = lines[0].trim();
+        // First line contains the extension ID
+        const extensionId = lines[0].trim();
 
-      // Extract name, description and state from the remaining lines
-      let name = 'Unknown';
-      let version = 'Unknown';
-      let state = 'UNKNOWN';
+        // Extract name, description and state from the remaining lines
+        let name = 'Unknown';
+        let version = 'Unknown';
+        let state = 'UNKNOWN';
 
-      for (const line of lines.slice(1)) {
-        if (line.includes('Name:')) {
-          name = line.split('Name:')[1].trim();
-        } else if (line.includes('Version:')) {
-          version = line.split('Version:')[1].trim();
-        } else if (line.includes('State:')) {
-          state = line.split('State:')[1].trim();
+        for (const line of lines.slice(1)) {
+          if (line.includes('Name:')) {
+            name = line.split('Name:')[1].trim();
+          } else if (line.includes('Version:')) {
+            version = line.split('Version:')[1].trim();
+          } else if (line.includes('State:')) {
+            state = line.split('State:')[1].trim();
+          }
         }
-      }
 
-      return {
-        name,
-        id: extensionId,
-        enabled: state === 'ENABLED',
-        version,
-        enable_link: `gnome-extensions enable ${extensionId}`,
-        disable_link: `gnome-extensions disable ${extensionId}`
-      };
-    }).filter(ext => ext !== null); // Remove any null entries
+        return {
+          name,
+          id: extensionId,
+          enabled: state === 'ENABLED',
+          version,
+          enable_link: `gnome-extensions enable ${extensionId}`,
+          disable_link: `gnome-extensions disable ${extensionId}`,
+        };
+      })
+      .filter((ext) => ext !== null); // Remove any null entries
 
     return {
       error: null,
-      extensions
+      extensions,
     };
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : 'Failed to get installed extensions',
-      extensions: []
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to get installed extensions',
+      extensions: [],
     };
   }
 });
@@ -348,10 +400,15 @@ ipcMain.handle('get-terminal-info', async () => {
     const { stdout, stderr } = await execAsync('gnome-terminal --version');
     return { error: null, terminalInfo: stdout };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Failed to get terminal information', terminalInfo: null };
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to get terminal information',
+      terminalInfo: null,
+    };
   }
 });
-
 
 ipcMain.handle('execute-command', async (_, command) => {
   try {
@@ -464,11 +521,12 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
-    createWindow();
+    const window = createWindow();
     app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
+    return window;
   })
-  .catch(console.log);
+  .catch((error) => {
+    console.error('Error creating window:', error);
+  });

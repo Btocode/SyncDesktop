@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import '../App.css';
 import Sidebar from './Sidebar';
-import { DeviceConfig, Extension, TerminalConfig, ThemeConfig } from '../types';
+import { DeviceConfig, Extension, ThemeConfig } from '../types';
 import DeviceDetailsPage from '../pages/DeviceDetailsPage';
 import DevicesPage from '../pages/DevicesPage';
 import ExtensionsPage from '../pages/ExtensionsPage';
 import TerminalPage from '../pages/TerminalPage';
 import ThemesPage from '../pages/ThemesPage';
 import SettingsPage from '../pages/SettingsPage';
+import Loader from './Loader';
 
-// Mock data
+// Mock data for other components
 const mockDevices: DeviceConfig[] = [
   {
     id: 'device-1',
@@ -21,10 +22,10 @@ const mockDevices: DeviceConfig[] = [
     extensionsCount: {
       enabled: 42,
       disabled: 7,
-      total: 49
+      total: 49,
     },
     terminalConfigured: true,
-    themeConfigured: true
+    themeConfigured: true,
   },
   {
     id: 'device-2',
@@ -36,10 +37,10 @@ const mockDevices: DeviceConfig[] = [
     extensionsCount: {
       enabled: 38,
       disabled: 12,
-      total: 50
+      total: 50,
     },
     terminalConfigured: true,
-    themeConfigured: true
+    themeConfigured: true,
   },
   {
     id: 'device-3',
@@ -51,11 +52,11 @@ const mockDevices: DeviceConfig[] = [
     extensionsCount: {
       enabled: 35,
       disabled: 8,
-      total: 43
+      total: 43,
     },
     terminalConfigured: false,
-    themeConfigured: true
-  }
+    themeConfigured: true,
+  },
 ];
 
 const mockExtensions: Extension[] = [
@@ -70,7 +71,7 @@ const mockExtensions: Extension[] = [
   { id: 'ext-9', name: 'Material Theme', version: '2.8.0', enabled: true },
   { id: 'ext-10', name: 'Vim Emulation', version: '1.24.3', enabled: false },
   { id: 'ext-11', name: 'Remote SSH', version: '0.65.7', enabled: true },
-  { id: 'ext-12', name: 'Live Server', version: '5.7.9', enabled: false }
+  { id: 'ext-12', name: 'Live Server', version: '5.7.9', enabled: false },
 ];
 
 const mockThemeConfig: ThemeConfig = {
@@ -88,18 +89,60 @@ const mockThemeConfig: ThemeConfig = {
   buttonLayout: 'Default',
   animations: true,
   clockFormat: '12h',
-  accentColor: '#008080'
+  accentColor: '#008080',
 };
-
-
 
 function Dashboard() {
   // State for active tab and selected device
   const [activeTab, setActiveTab] = React.useState<string>('devices');
-  const [selectedDevice, setSelectedDevice] = React.useState<string | null>(null);
+  const [selectedDevice, setSelectedDevice] = React.useState<string | null>(
+    null,
+  );
   const [devices, setDevices] = React.useState<DeviceConfig[]>(mockDevices);
-  const [extensions, setExtensions] = React.useState<Extension[]>(mockExtensions);
-  const [themeConfig, setThemeConfig] = React.useState<ThemeConfig>(mockThemeConfig);
+  const [extensions, setExtensions] =
+    React.useState<Extension[]>(mockExtensions);
+  const [themeConfig, setThemeConfig] =
+    React.useState<ThemeConfig>(mockThemeConfig);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [currentDevice, setCurrentDevice] = React.useState<DeviceConfig | null>(
+    null,
+  );
+
+  // Fetch current device configuration
+  useEffect(() => {
+    const fetchDeviceConfig = async () => {
+      try {
+        setLoading(true);
+        const config = (await window.electron.ipcRenderer.invoke(
+          'get-device-config',
+        )) as DeviceConfig;
+        setCurrentDevice(config);
+
+        // Update devices list with current device
+        const updatedDevices = [...devices];
+        const existingIndex = updatedDevices.findIndex(
+          (d) => d.id === config.id,
+        );
+
+        if (existingIndex >= 0) {
+          updatedDevices[existingIndex] = config;
+        } else {
+          updatedDevices.push(config);
+        }
+
+        setDevices(updatedDevices);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch device config',
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeviceConfig();
+  }, []);
 
   // Handle device selection
   const handleDeviceSelect = (deviceId: string) => {
@@ -115,17 +158,27 @@ function Dashboard() {
 
   // Toggle device sync
   const handleToggleDeviceSync = (deviceId: string) => {
-    setDevices(devices.map(device =>
-      device.id === deviceId
-        ? { ...device, syncEnabled: !device.syncEnabled }
-        : device
-    ));
+    setDevices(
+      devices.map((device) =>
+        device.id === deviceId
+          ? { ...device, syncEnabled: !device.syncEnabled }
+          : device,
+      ),
+    );
   };
 
   // Get the selected device
   const selectedDeviceData = selectedDevice
-    ? devices.find(d => d.id === selectedDevice)
+    ? devices.find((d) => d.id === selectedDevice)
     : null;
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <div className="error-container">Error: {error}</div>;
+  }
 
   return (
     <div className="dashboard-container">
@@ -138,6 +191,7 @@ function Dashboard() {
               devices={devices}
               onDeviceSelect={handleDeviceSelect}
               onToggleDeviceSync={handleToggleDeviceSync}
+              currentDevice={currentDevice}
             />
           )}
 
@@ -150,21 +204,13 @@ function Dashboard() {
             />
           )}
 
-          {activeTab === 'extensions' && (
-            <ExtensionsPage />
-          )}
+          {activeTab === 'extensions' && <ExtensionsPage />}
 
-          {activeTab === 'terminal' && (
-            <TerminalPage />
-          )}
+          {activeTab === 'terminal' && <TerminalPage />}
 
-          {activeTab === 'themes' && (
-            <ThemesPage />
-          )}
+          {activeTab === 'themes' && <ThemesPage />}
 
-          {activeTab === 'settings' && (
-            <SettingsPage />
-          )}
+          {activeTab === 'settings' && <SettingsPage />}
         </div>
       </div>
     </div>
