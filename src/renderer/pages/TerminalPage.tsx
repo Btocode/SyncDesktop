@@ -4,7 +4,7 @@ import CommandLibrary from '../components/device-terminal/CommandLibrary';
 import SnippetManager from '../components/device-terminal/SnippetManager';
 import TerminalConfig from '../components/device-terminal/TerminalConfig';
 import { TerminalConfig as TerminalConfigType } from '../types';
-import '../styles/TerminalPage.css';
+// import '../styles/TerminalPage.css';
 
 interface TerminalInfoResult {
   error: string | null;

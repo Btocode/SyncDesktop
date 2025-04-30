@@ -3,7 +3,7 @@ import ExtensionItem from '../components/ExtensionItem';
 import Loader from '../components/Loader';
 import { Extension } from '../types';
 import { colors, commonStyles, spacing } from '../styles/theme';
-import '../styles/ExtensionsPage.css';
+// import '../styles/ExtensionsPage.css';
 
 interface ExtensionResponse {
   error: string | null;
