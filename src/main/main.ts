@@ -7,6 +7,8 @@ import { resolveHtmlPath } from './util';
 import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
 
 class AppUpdater {
   constructor() {
@@ -36,11 +38,49 @@ interface DeviceConfig {
   themeConfigured: boolean;
 }
 
+// Function to generate a persistent device ID
+const generateDeviceId = (): string => {
+  const configPath = path.join(app.getPath('userData'), 'device-id.json');
+
+  // Try to read existing device ID
+  try {
+    if (fs.existsSync(configPath)) {
+      const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (data.deviceId) {
+        return data.deviceId;
+      }
+    }
+  } catch (error) {
+    console.error('Error reading device ID:', error);
+  }
+
+  // If no existing ID, generate a new one based on hardware info
+  const cpu = os.cpus()[0]?.model || '';
+  const totalMem = os.totalmem();
+  const hostname = os.hostname();
+  const platform = os.platform();
+  const arch = os.arch();
+
+  // Create a hash of hardware information
+  const hardwareStr = `${cpu}-${totalMem}-${hostname}-${platform}-${arch}`;
+  const deviceId = crypto.createHash('sha256').update(hardwareStr).digest('hex');
+
+  // Save the device ID
+  try {
+    fs.writeFileSync(configPath, JSON.stringify({ deviceId }));
+  } catch (error) {
+    console.error('Error saving device ID:', error);
+  }
+
+  return deviceId;
+};
+
 ipcMain.handle('get-device-config', async () => {
   try {
     // Get system information
     const platform = os.platform();
     const hostname = os.hostname();
+    const deviceId = generateDeviceId();
 
     // Get current timestamp
     const now = new Date();
@@ -56,29 +96,41 @@ ipcMain.handle('get-device-config', async () => {
       platformType = 'Linux';
     }
 
-    // Get extensions count (you'll need to implement this based on your needs)
+    // Get extensions count
+    let extensionsList = '';
+    if (platform === 'linux') {
+      try {
+        const { stdout } = await execAsync(
+          'gsettings get org.gnome.shell enabled-extensions',
+        );
+        extensionsList = stdout.trim();
+      } catch (error) {
+        console.error('Error getting enabled extensions:', error);
+      }
+    }
+
     const extensionsCount = {
-      enabled: 42, // Replace with actual count
-      disabled: 7, // Replace with actual count
-      total: 49, // Replace with actual count
+      enabled: extensionsList ? extensionsList.split(',').length : 0,
+      disabled: 0,
+      total: extensionsList ? extensionsList.split(',').length : 0,
     };
 
     const deviceConfig: DeviceConfig = {
-      id: `device-${hostname}`,
+      id: deviceId,
       name: hostname,
       type: platformType,
       lastSynced,
       status: 'synced',
       syncEnabled: true,
       extensionsCount,
-      terminalConfigured: true, // You can check actual configuration
-      themeConfigured: true, // You can check actual configuration
+      terminalConfigured: true,
+      themeConfigured: true,
     };
 
     return deviceConfig;
   } catch (error) {
     console.error('Error getting device config:', error);
-    throw error; // This will be caught in the renderer
+    throw error;
   }
 });
 

@@ -10,54 +10,6 @@ import SettingsPage from '../pages/SettingsPage';
 import Loader from './Loader';
 
 // Mock data for other components
-const mockDevices: DeviceConfig[] = [
-  {
-    id: 'device-1',
-    name: 'MacBook Pro',
-    type: 'macOS',
-    lastSynced: '2023-06-15 14:30',
-    status: 'synced',
-    syncEnabled: true,
-    extensionsCount: {
-      enabled: 42,
-      disabled: 7,
-      total: 49,
-    },
-    terminalConfigured: true,
-    themeConfigured: true,
-  },
-  {
-    id: 'device-2',
-    name: 'Ubuntu Workstation',
-    type: 'Linux',
-    lastSynced: '2023-06-14 09:15',
-    status: 'changed',
-    syncEnabled: true,
-    extensionsCount: {
-      enabled: 38,
-      disabled: 12,
-      total: 50,
-    },
-    terminalConfigured: true,
-    themeConfigured: true,
-  },
-  {
-    id: 'device-3',
-    name: 'Windows Desktop',
-    type: 'Windows',
-    lastSynced: '2023-06-10 18:45',
-    status: 'error',
-    syncEnabled: false,
-    extensionsCount: {
-      enabled: 35,
-      disabled: 8,
-      total: 43,
-    },
-    terminalConfigured: false,
-    themeConfigured: true,
-  },
-];
-
 const mockExtensions: Extension[] = [
   { id: 'ext-1', name: 'Python', version: '1.74.3', enabled: true },
   { id: 'ext-2', name: 'JavaScript ES6', version: '2.1.0', enabled: true },
@@ -97,7 +49,7 @@ function Dashboard() {
   const [selectedDevice, setSelectedDevice] = React.useState<string | null>(
     null,
   );
-  const [devices, setDevices] = React.useState<DeviceConfig[]>(mockDevices);
+  const [devices, setDevices] = React.useState<DeviceConfig[]>([]);
   const [extensions, setExtensions] =
     React.useState<Extension[]>(mockExtensions);
   const [themeConfig, setThemeConfig] =
@@ -117,6 +69,8 @@ function Dashboard() {
           'get-device-config',
         )) as DeviceConfig;
         setCurrentDevice(config);
+
+        console.log(config);
 
         // Update devices list with current device
         const updatedDevices = [...devices];
