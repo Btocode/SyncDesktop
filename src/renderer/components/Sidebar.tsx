@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { spacing, colors } from '../styles/theme';
+import { getUserInfo, logout } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activeTab: string;
@@ -8,7 +10,9 @@ interface SidebarProps {
 
 function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
+  const userInfo = getUserInfo();
+  const firstName = userInfo?.display_name?.split(' ')[0] || 'User';
+  const navigate = useNavigate();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -19,6 +23,11 @@ function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     if (e.key === 'Enter' || e.key === ' ') {
       setActiveTab(tab);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -137,18 +146,19 @@ function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 fontWeight: 'bold',
               }}
             >
-              JS
+              {firstName.charAt(0)}
             </div>
             <div>
-              <div style={{ fontWeight: '500' }}>John Smith</div>
+              <div style={{ fontWeight: '500' }}>{firstName}</div>
             </div>
           </div>
           <button
             className="btn btn-outline"
             style={{ width: '100%', fontSize: '0.85rem' }}
             type="button"
+            onClick={handleLogout}
           >
-            Manage Account
+            Logout
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../store/slices/authSlice';
 import type { RootState, AppDispatch } from '../store';
+import { setAuthTokens, setUserInfo } from '../services/api';
 import '../styles/auth.css';
 
 function LoginPage(): React.ReactElement {
@@ -70,7 +71,9 @@ function LoginPage(): React.ReactElement {
     }
 
     try {
-      await dispatch(login(formData)).unwrap();
+      const response = await dispatch(login(formData)).unwrap();
+      setAuthTokens(response.access_token, response.refresh_token);
+      setUserInfo(response.user_info);
       navigate('/');
     } catch (err) {
       // Error is handled by the auth slice

@@ -4,7 +4,7 @@ import api from '../../services/api';
 interface User {
   id: string;
   email: string;
-  name: string;
+  display_name: string;
 }
 
 interface AuthState {
@@ -41,14 +41,12 @@ const initialState: AuthState = {
 };
 
 export const login = createAsyncThunk<
-  { accessToken: string; refreshToken: string; tokenType: string },
+  { user_info: User; access_token: string; refresh_token: string },
   LoginCredentials
 >('auth/login', async (credentials) => {
   const response = await api.post('/auth/login', credentials);
-  const { access_token, refresh_token, token_type } = response.data;
-  localStorage.setItem('auth_token', access_token);
-  localStorage.setItem('refresh_token', refresh_token);
-  return { access_token, refresh_token, token_type };
+  const { user_info, access_token, refresh_token } = response.data;
+  return { user_info, access_token, refresh_token };
 });
 
 export const signup = createAsyncThunk<AuthResponse, SignupData>(
