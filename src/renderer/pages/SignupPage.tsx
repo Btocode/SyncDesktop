@@ -93,7 +93,7 @@ function SignupPage(): React.ReactElement {
 
     try {
       await dispatch(signup(formData)).unwrap();
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       // Error is handled by the auth slice
     }

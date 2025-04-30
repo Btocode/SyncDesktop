@@ -9,9 +9,9 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  access_token: string | null;
-  refresh_token: string | null;
-  token_type: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  tokenType: string | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -26,43 +26,67 @@ interface SignupData extends LoginCredentials {
 }
 
 interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
+  userInfo: User;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
 }
 
 const initialState: AuthState = {
   user: null,
-  access_token: localStorage.getItem('auth_token'),
-  refresh_token: localStorage.getItem('refresh_token'),
-  token_type: 'bearer',
+  accessToken: localStorage.getItem('access_token'),
+  refreshToken: localStorage.getItem('refresh_token'),
+  tokenType: 'bearer',
   isLoading: false,
   error: null,
 };
 
 export const login = createAsyncThunk<
-  { user_info: User; access_token: string; refresh_token: string },
+  { userInfo: User; accessToken: string; refreshToken: string },
   LoginCredentials
 >('auth/login', async (credentials) => {
   const response = await api.post('/auth/login', credentials);
   const { user_info, access_token, refresh_token } = response.data;
-  return { user_info, access_token, refresh_token };
+  return {
+    userInfo: {
+      id: user_info.user_id,
+      email: user_info.email,
+      displayName: user_info.display_name,
+    },
+    accessToken: access_token,
+    refreshToken: refresh_token,
+  };
 });
 
 export const signup = createAsyncThunk<AuthResponse, SignupData>(
   'auth/signup',
-  async (userData) => {
-    const response = await api.post<AuthResponse>('/auth/signup', userData);
-    const { access_token, refresh_token, token_type } = response.data;
-    localStorage.setItem('auth_token', access_token);
-    localStorage.setItem('refresh_token', refresh_token);
-    return { access_token, refresh_token, token_type };
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await api.post<AuthResponse>('/auth/signup', userData);
+      const { user_info, access_token, refresh_token, token_type } = response.data;
+      return {
+        userInfo: {
+          id: user_info.user_id,
+          email: user_info.email,
+          display_name: user_info.display_name,
+        },
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        tokenType: token_type,
+      };
+    } catch (error: any) {
+      if (error.response?.data?.detail === 'User with this email already exists') {
+        return rejectWithValue('Email already exists');
+      }
+      return rejectWithValue(error.response?.data?.detail || 'Signup failed');
+    }
   },
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
-  localStorage.removeItem('auth_token');
+  localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user_info');
   await api.post('/auth/logout');
 });
 
@@ -81,15 +105,12 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(
-        login.fulfilled,
-        (state, action: PayloadAction<AuthResponse>) => {
-          state.isLoading = false;
-          state.access_token = action.payload.access_token;
-          state.refresh_token = action.payload.refresh_token;
-          state.token_type = action.payload.token_type;
-        },
-      )
+      .addCase(login.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.userInfo;
+        state.accessToken = action.payload.accessToken;
+        state.refreshToken = action.payload.refreshToken;
+      })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Login failed';
@@ -99,25 +120,23 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(
-        signup.fulfilled,
-        (state, action: PayloadAction<AuthResponse>) => {
-          state.isLoading = false;
-          state.access_token = action.payload.access_token;
-          state.refresh_token = action.payload.refresh_token;
-          state.token_type = action.payload.token_type;
-        },
-      )
+      .addCase(signup.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.userInfo;
+        state.accessToken = action.payload.accessToken;
+        state.refreshToken = action.payload.refreshToken;
+        state.tokenType = action.payload.tokenType;
+      })
       .addCase(signup.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Signup failed';
+        state.error = action.payload as string || 'Signup failed';
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
-        state.access_token = null;
-        state.refresh_token = null;
-        state.token_type = null;
+        state.accessToken = null;
+        state.refreshToken = null;
+        state.tokenType = null;
       });
   },
 });

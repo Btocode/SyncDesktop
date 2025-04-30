@@ -20,7 +20,7 @@ interface PrivateRouteProps {
 }
 
 function PrivateRoute({ children }: PrivateRouteProps): React.ReactElement {
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('access_token');
   return token ? children : <Navigate to="/login" />;
 }
 
