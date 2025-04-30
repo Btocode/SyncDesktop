@@ -72,9 +72,18 @@ function LoginPage(): React.ReactElement {
 
     try {
       const response = await dispatch(login(formData)).unwrap();
-      setAuthTokens(response.access_token, response.refresh_token);
-      setUserInfo(response.user_info);
-      navigate('/');
+      if (response.access_token && response.refresh_token) {
+        setAuthTokens({
+          access_token: response.access_token,
+          refresh_token: response.refresh_token,
+        });
+        setUserInfo({
+          user_id: response.user_info.user_id,
+          email: response.user_info.email,
+          display_name: response.user_info.display_name,
+        });
+        navigate('/');
+      }
     } catch (err) {
       // Error is handled by the auth slice
     }

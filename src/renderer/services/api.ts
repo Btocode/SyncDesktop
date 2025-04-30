@@ -4,6 +4,17 @@ import axios, {
   AxiosError,
 } from 'axios';
 
+interface UserInfo {
+  user_id: string;
+  email: string;
+  display_name: string;
+}
+
+interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+}
+
 const BASE_URL = 'http://localhost:8000/api/v1';
 
 const api = axios.create({
@@ -43,16 +54,16 @@ api.interceptors.response.use(
   },
 );
 
-export const setAuthTokens = (accessToken: string, refreshToken: string) => {
-  localStorage.setItem('access_token', accessToken);
-  localStorage.setItem('refresh_token', refreshToken);
+export const setAuthTokens = ({ access_token, refresh_token }: AuthTokens): void => {
+  localStorage.setItem('access_token', access_token);
+  localStorage.setItem('refresh_token', refresh_token);
 };
 
-export const setUserInfo = (userInfo: any) => {
+export const setUserInfo = (userInfo: UserInfo): void => {
   localStorage.setItem('user_info', JSON.stringify(userInfo));
 };
 
-export const logout = () => {
+export const logout = (): void => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user_info');
@@ -60,7 +71,7 @@ export const logout = () => {
   window.location.hash = '#/login';
 };
 
-export const getUserInfo = () => {
+export const getUserInfo = (): UserInfo | null => {
   try {
     const userInfo = localStorage.getItem('user_info');
     if (!userInfo) return null;
