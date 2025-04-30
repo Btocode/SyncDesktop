@@ -4,7 +4,7 @@ import OverviewTab from '../components/device-details/OverviewTab';
 import ExtensionsTab from '../components/device-details/ExtensionsTab';
 import TerminalTab from '../components/device-details/TerminalTab';
 import ThemeTab from '../components/device-details/ThemeTab';
-import '../styles/device-details.css';
+// import '../styles/device-details.css';
 
 interface DeviceDetailsPageProps {
   device: DeviceConfig;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ThemeConfig } from '../types';
-import '../styles/ThemesPage.css';
+// import '../styles/ThemesPage.css';
 import Loader from '../components/Loader';
 
 interface ThemeResult {

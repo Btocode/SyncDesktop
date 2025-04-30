@@ -5,17 +5,26 @@ interface DeviceCardProps {
   device: DeviceConfig;
   onClick: () => void;
   onToggleSync: (deviceId: string) => void;
+  isCurrentDevice?: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onToggleSync }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({
+  device,
+  onClick,
+  onToggleSync,
+  isCurrentDevice = false
+}) => {
   return (
     <div
-      className="device-card"
+      className={`device-card ${isCurrentDevice ? 'current-device' : ''}`}
       onClick={onClick}
     >
       <div className="device-header">
         <div>
-          <h3 className="device-name">{device.name}</h3>
+          <h3 className="device-name">
+            {device.name}
+            {isCurrentDevice && <span className="current-badge">Current</span>}
+          </h3>
           <div className="device-type">{device.type}</div>
         </div>
         <div className="device-status">

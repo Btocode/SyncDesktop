@@ -7,7 +7,8 @@ export type Channels =
   | 'get-linux-theme-info'
   | 'get-ubuntu-extensions'
   | 'execute-command'
-  | 'get-terminal-info';
+  | 'get-terminal-info'
+  | 'get-device-config';
 
 const electronHandler = {
   ipcRenderer: {
